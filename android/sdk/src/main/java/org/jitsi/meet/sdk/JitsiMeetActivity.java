@@ -43,8 +43,18 @@ public class JitsiMeetActivity extends FragmentActivity
     private static final String ACTION_JITSI_MEET_CONFERENCE = "org.jitsi.meet.CONFERENCE";
     private static final String JITSI_MEET_CONFERENCE_OPTIONS = "JitsiMeetConferenceOptions";
 
+    protected int layoutResID = R.layout.activity_jitsi_meet;
+    protected int fragmentResID = R.id.jitsiFragment;
+
     // Helpers for starting the activity
     //
+
+    public static void launch(FragmentActivity fragmentActivity, JitsiMeetConferenceOptions options) {
+        Intent intent = new Intent(fragmentActivity, JitsiMeetActivity.class);
+        intent.setAction(ACTION_JITSI_MEET_CONFERENCE);
+        intent.putExtra(JITSI_MEET_CONFERENCE_OPTIONS, options);
+        fragmentActivity.startActivityForResult(intent, 1);
+    }
 
     public static void launch(Context context, JitsiMeetConferenceOptions options) {
         Intent intent = new Intent(context, JitsiMeetActivity.class);
@@ -66,7 +76,7 @@ public class JitsiMeetActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_jitsi_meet);
+        setContentView(layoutResID);
 
         // Listen for conference events.
         getJitsiView().setListener(this);
@@ -106,7 +116,7 @@ public class JitsiMeetActivity extends FragmentActivity
 
     protected JitsiMeetView getJitsiView() {
         JitsiMeetFragment fragment
-            = (JitsiMeetFragment) getSupportFragmentManager().findFragmentById(R.id.jitsiFragment);
+            = (JitsiMeetFragment) getSupportFragmentManager().findFragmentById(fragmentResID);
         return fragment.getJitsiView();
     }
 

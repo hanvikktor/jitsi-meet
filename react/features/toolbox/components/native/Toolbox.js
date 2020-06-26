@@ -3,6 +3,7 @@
 import React, { PureComponent } from 'react';
 import { View } from 'react-native';
 
+import { getFeatureFlag, MINIMAL_UI_ENABLED } from '../../../base/flags';
 import { ColorSchemeRegistry } from '../../../base/color-scheme';
 import { Container } from '../../../base/react';
 import { connect } from '../../../base/redux';
@@ -20,6 +21,11 @@ import styles from './styles';
  * The type of {@link Toolbox}'s React {@code Component} props.
  */
 type Props = {
+
+    /**
+     * True if only the hang up button will be displayed.
+     */
+    _yayofonoMinimalUIEnabled: boolean,
 
     /**
      * The color-schemed stylesheet of the feature.
@@ -96,7 +102,7 @@ class Toolbox extends PureComponent<Props> {
      * @returns {React$Node}
      */
     _renderToolbar() {
-        const { _styles } = this.props;
+        const { _yayofonoMinimalUIEnabled, _styles } = this.props;
         const { buttonStyles, buttonStylesBorderless, hangupButtonStyles, toggledButtonStyles } = _styles;
 
         return (
@@ -104,20 +110,26 @@ class Toolbox extends PureComponent<Props> {
                 accessibilityRole = 'toolbar'
                 pointerEvents = 'box-none'
                 style = { styles.toolbar }>
-                <ChatButton
-                    styles = { buttonStylesBorderless }
-                    toggledStyles = { this._getChatButtonToggledStyle(toggledButtonStyles) } />
-                <AudioMuteButton
+                {
+                    _yayofonoMinimalUIEnabled ? undefined : 
+                    <AudioMuteButton
                     styles = { buttonStyles }
                     toggledStyles = { toggledButtonStyles } />
+                }
                 <HangupButton
                     styles = { hangupButtonStyles } />
-                <VideoMuteButton
-                    styles = { buttonStyles }
-                    toggledStyles = { toggledButtonStyles } />
-                <OverflowMenuButton
-                    styles = { buttonStylesBorderless }
-                    toggledStyles = { toggledButtonStyles } />
+                {
+                    _yayofonoMinimalUIEnabled ? undefined : 
+                    <VideoMuteButton
+                        styles = { buttonStyles }
+                        toggledStyles = { toggledButtonStyles } />
+                }
+                {
+                    _yayofonoMinimalUIEnabled ? undefined : 
+                    <OverflowMenuButton
+                        styles = { buttonStylesBorderless }
+                        toggledStyles = { toggledButtonStyles } />
+                }
             </View>
         );
     }
@@ -133,7 +145,10 @@ class Toolbox extends PureComponent<Props> {
  * @returns {Props}
  */
 function _mapStateToProps(state: Object): Object {
+    const flag = getFeatureFlag(state, MINIMAL_UI_ENABLED, false);
+    
     return {
+        _yayofonoMinimalUIEnabled: flag,
         _styles: ColorSchemeRegistry.get(state, 'Toolbox'),
         _visible: isToolboxVisible(state)
     };

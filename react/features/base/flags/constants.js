@@ -64,6 +64,12 @@ export const MEETING_NAME_ENABLED = 'meeting-name.enabled';
 export const MEETING_PASSWORD_ENABLED = 'meeting-password.enabled';
 
 /**
+ * Flag indicating if displaying only hang up button should be enabled.
+ * Default: disabled (true).
+ */
+export const MINIMAL_UI_ENABLED = 'minimal-ui.enabled';
+
+/**
  * Flag indicating if Picture-in-Picture should be enabled.
  * Default: auto-detected.
  */
