@@ -1,0 +1,14 @@
+Steps to compile:
+
+1) Modify "local.properties":
+sdk.dir=/home/victor/Android/
+
+2) In UNIX OS:
+
+>> cd /mnt/e/Proyectos/PROGRAMACION/AndroidStudioProjects/jitsi-meet/
+>> make
+>> rm -R /tmp/repo
+>> ./android/scripts/release-sdk.sh /tmp/repo
+>> cp -r /tmp/repo/ /mnt/e/tmp
+
+3) In Android Stuido Clean project and compile

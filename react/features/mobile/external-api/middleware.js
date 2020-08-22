@@ -10,6 +10,10 @@ import {
     forEachConference,
     isRoomValid
 } from '../../base/conference';
+import {
+    PARTICIPANT_JOINED,
+    PARTICIPANT_LEFT
+} from '../../base/participants';
 import { LOAD_CONFIG_ERROR } from '../../base/config';
 import {
     CONNECTION_DISCONNECTED,
@@ -41,6 +45,13 @@ MiddlewareRegistry.register(store => next => action => {
     const { type } = action;
 
     switch (type) {
+    case PARTICIPANT_JOINED:
+    case PARTICIPANT_LEFT: {
+        sendEvent(store, type, /* data */ {
+            participant: action.participant.id
+        });
+        break;
+    }
     case CONFERENCE_FAILED: {
         const { error, ...data } = action;
 

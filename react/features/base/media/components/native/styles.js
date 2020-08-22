@@ -25,6 +25,7 @@ export default StyleSheet.create({
      * Make {@code Video} fill its container.
      */
     video: {
-        flex: 1
+        flex: 1,
+        objectFit: 'contain' // Changed by YAYOFONO in order to avoid video cropping when orientation differs
     }
 });

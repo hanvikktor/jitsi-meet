@@ -105,6 +105,13 @@ class Toolbox extends PureComponent<Props> {
         const { _yayofonoMinimalUIEnabled, _styles } = this.props;
         const { buttonStyles, buttonStylesBorderless, hangupButtonStyles, toggledButtonStyles } = _styles;
 
+        if (_yayofonoMinimalUIEnabled) {
+            const NEW_BUTTON_SIZE = 100;
+            hangupButtonStyles.style.borderRadius = NEW_BUTTON_SIZE / 2;
+            hangupButtonStyles.style.height = NEW_BUTTON_SIZE;
+            hangupButtonStyles.style.width = NEW_BUTTON_SIZE;
+        }
+
         return (
             <View
                 accessibilityRole = 'toolbar'
