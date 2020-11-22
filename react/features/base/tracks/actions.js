@@ -9,7 +9,8 @@ import {
     MEDIA_TYPE,
     setAudioMuted,
     setVideoMuted,
-    VIDEO_MUTISM_AUTHORITY
+    VIDEO_MUTISM_AUTHORITY,
+    VIDEO_TYPE
 } from '../media';
 import { getLocalParticipant } from '../participants';
 
@@ -24,7 +25,13 @@ import {
     TRACK_UPDATED,
     TRACK_WILL_CREATE
 } from './actionTypes';
-import { createLocalTracksF, getLocalTrack, getLocalTracks, getTrackByJitsiTrack } from './functions';
+import {
+    createLocalTracksF,
+    getLocalTrack,
+    getLocalTracks,
+    getLocalVideoTrack,
+    getTrackByJitsiTrack
+} from './functions';
 import logger from './logger';
 
 /**
@@ -39,6 +46,8 @@ import logger from './logger';
 export function createDesiredLocalTracks(...desiredTypes) {
     return (dispatch, getState) => {
         const state = getState();
+
+        dispatch(destroyLocalDesktopTrackIfExists());
 
         if (desiredTypes.length === 0) {
             const { audio, video } = state['features/base/media'];
@@ -267,56 +276,70 @@ export function toggleScreensharing() {
  * @returns {Function}
  */
 export function replaceLocalTrack(oldTrack, newTrack, conference) {
-    return (dispatch, getState) => {
+    return async (dispatch, getState) => {
         conference
 
             // eslint-disable-next-line no-param-reassign
             || (conference = getState()['features/base/conference'].conference);
 
-        return conference.replaceTrack(oldTrack, newTrack)
+        if (conference) {
+            await conference.replaceTrack(oldTrack, newTrack);
+        }
+
+        return dispatch(replaceStoredTracks(oldTrack, newTrack));
+    };
+}
+
+/**
+ * Replaces a stored track with another.
+ *
+ * @param {JitsiLocalTrack|null} oldTrack - The track to dispose.
+ * @param {JitsiLocalTrack|null} newTrack - The track to use instead.
+ * @returns {Function}
+ */
+function replaceStoredTracks(oldTrack, newTrack) {
+    return dispatch => {
+        // We call dispose after doing the replace because dispose will
+        // try and do a new o/a after the track removes itself. Doing it
+        // after means the JitsiLocalTrack.conference is already
+        // cleared, so it won't try and do the o/a.
+        const disposePromise
+              = oldTrack
+                  ? dispatch(_disposeAndRemoveTracks([ oldTrack ]))
+                  : Promise.resolve();
+
+        return disposePromise
             .then(() => {
-                // We call dispose after doing the replace because dispose will
-                // try and do a new o/a after the track removes itself. Doing it
-                // after means the JitsiLocalTrack.conference is already
-                // cleared, so it won't try and do the o/a.
-                const disposePromise
-                    = oldTrack
-                        ? dispatch(_disposeAndRemoveTracks([ oldTrack ]))
-                        : Promise.resolve();
+                if (newTrack) {
+                    // The mute state of the new track should be
+                    // reflected in the app's mute state. For example,
+                    // if the app is currently muted and changing to a
+                    // new track that is not muted, the app's mute
+                    // state should be falsey. As such, emit a mute
+                    // event here to set up the app to reflect the
+                    // track's mute state. If this is not done, the
+                    // current mute state of the app will be reflected
+                    // on the track, not vice-versa.
+                    const setMuted
+                          = newTrack.isVideoTrack()
+                              ? setVideoMuted
+                              : setAudioMuted;
+                    const isMuted = newTrack.isMuted();
 
-                return disposePromise
-                    .then(() => {
-                        if (newTrack) {
-                            // The mute state of the new track should be
-                            // reflected in the app's mute state. For example,
-                            // if the app is currently muted and changing to a
-                            // new track that is not muted, the app's mute
-                            // state should be falsey. As such, emit a mute
-                            // event here to set up the app to reflect the
-                            // track's mute state. If this is not done, the
-                            // current mute state of the app will be reflected
-                            // on the track, not vice-versa.
-                            const setMuted
-                                = newTrack.isVideoTrack()
-                                    ? setVideoMuted
-                                    : setAudioMuted;
-                            const isMuted = newTrack.isMuted();
+                    sendAnalytics(createTrackMutedEvent(
+                        newTrack.getType(),
+                        'track.replaced',
+                        isMuted));
+                    logger.log(`Replace ${newTrack.getType()} track - ${
+                        isMuted ? 'muted' : 'unmuted'}`);
 
-                            sendAnalytics(createTrackMutedEvent(
-                                newTrack.getType(),
-                                'track.replaced',
-                                isMuted));
-                            logger.log(`Replace ${newTrack.getType()} track - ${
-                                isMuted ? 'muted' : 'unmuted'}`);
-
-                            return dispatch(setMuted(isMuted));
-                        }
-                    })
-                    .then(() => {
-                        if (newTrack) {
-                            return dispatch(_addTracks([ newTrack ]));
-                        }
-                    });
+                    return dispatch(setMuted(isMuted));
+                }
+            })
+            .then(() => {
+                if (newTrack) {
+                    return dispatch(_addTracks([ newTrack ]));
+                }
             });
     };
 }
@@ -646,6 +669,22 @@ function _trackCreateCanceled(mediaType) {
     return {
         type: TRACK_CREATE_CANCELED,
         trackType: mediaType
+    };
+}
+
+/**
+ * If thee local track if of type Desktop, it calls _disposeAndRemoveTracks) on it.
+ *
+ * @returns {Function}
+ */
+export function destroyLocalDesktopTrackIfExists() {
+    return (dispatch, getState) => {
+        const videoTrack = getLocalVideoTrack(getState()['features/base/tracks']);
+        const isDesktopTrack = videoTrack && videoTrack.videoType === VIDEO_TYPE.DESKTOP;
+
+        if (isDesktopTrack) {
+            dispatch(_disposeAndRemoveTracks([ videoTrack.jitsiTrack ]));
+        }
     };
 }
 

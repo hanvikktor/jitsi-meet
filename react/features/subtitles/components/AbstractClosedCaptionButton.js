@@ -1,7 +1,8 @@
 // @flow
 
 import { createToolbarEvent, sendAnalytics } from '../../analytics';
-import { AbstractButton, type AbstractButtonProps } from '../../base/toolbox';
+import { isLocalParticipantModerator } from '../../base/participants';
+import { AbstractButton, type AbstractButtonProps } from '../../base/toolbox/components';
 import { toggleRequestingSubtitles } from '../actions';
 
 export type AbstractProps = AbstractButtonProps & {
@@ -83,9 +84,13 @@ export class AbstractClosedCaptionButton
  */
 export function _abstractMapStateToProps(state: Object, ownProps: Object) {
     const { _requestingSubtitles } = state['features/subtitles'];
-    const { isGuest = true } = state['features/base/jwt'];
     const { transcribingEnabled } = state['features/base/config'];
-    const { visible = Boolean(transcribingEnabled && !isGuest) } = ownProps;
+    const { isTranscribing } = state['features/transcribing'];
+
+    // if the participant is moderator, it can enable transcriptions and if
+    // transcriptions are already started for the meeting, guests can just show them
+    const { visible = Boolean(transcribingEnabled
+        && (isLocalParticipantModerator(state) || isTranscribing)) } = ownProps;
 
     return {
         _requestingSubtitles,

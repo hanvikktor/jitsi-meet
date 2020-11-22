@@ -12,14 +12,10 @@ import { Chat } from '../../../chat';
 import { Filmstrip } from '../../../filmstrip';
 import { CalleeInfoContainer } from '../../../invite';
 import { LargeVideo } from '../../../large-video';
-import { KnockingParticipantList } from '../../../lobby';
+import { KnockingParticipantList, LobbyScreen } from '../../../lobby';
 import { Prejoin, isPrejoinPageVisible } from '../../../prejoin';
-import {
-    Toolbox,
-    fullScreenChanged,
-    setToolboxAlwaysVisible,
-    showToolbox
-} from '../../../toolbox';
+import { fullScreenChanged, showToolbox } from '../../../toolbox/actions.web';
+import { Toolbox } from '../../../toolbox/components/web';
 import { LAYOUTS, getCurrentLayout } from '../../../video-layout';
 import { maybeShowSuboptimalExperienceNotification } from '../../functions';
 import {
@@ -28,13 +24,10 @@ import {
 } from '../AbstractConference';
 import type { AbstractProps } from '../AbstractConference';
 
-import InviteMore from './InviteMore';
 import Labels from './Labels';
 import { default as Notice } from './Notice';
-import { default as Subject } from './Subject';
 
 declare var APP: Object;
-declare var config: Object;
 declare var interfaceConfig: Object;
 
 /**
@@ -72,6 +65,11 @@ type Props = AbstractProps & {
      * Whether the local participant is recording the conference.
      */
     _iAmRecorder: boolean,
+
+    /**
+     * Returns true if the 'lobby screen' is visible.
+     */
+    _isLobbyScreenVisible: boolean,
 
     /**
      * The CSS class to apply to the root of {@link Conference} to modify the
@@ -177,16 +175,12 @@ class Conference extends AbstractConference<Props, *> {
      */
     render() {
         const {
-            // XXX The character casing of the name filmStripOnly utilized by
-            // interfaceConfig is obsolete but legacy support is required.
-            filmStripOnly: filmstripOnly
-        } = interfaceConfig;
-        const {
             _iAmRecorder,
+            _isLobbyScreenVisible,
             _layoutClassName,
             _showPrejoin
         } = this.props;
-        const hideLabels = filmstripOnly || _iAmRecorder;
+        const hideLabels = _iAmRecorder;
 
         return (
             <div
@@ -195,23 +189,21 @@ class Conference extends AbstractConference<Props, *> {
                 onMouseMove = { this._onShowToolbar }>
 
                 <Notice />
-                <Subject />
-                <InviteMore />
                 <div id = 'videospace'>
                     <LargeVideo />
                     <KnockingParticipantList />
+                    <Filmstrip />
                     { hideLabels || <Labels /> }
-                    <Filmstrip filmstripOnly = { filmstripOnly } />
                 </div>
 
-                { filmstripOnly || _showPrejoin || <Toolbox /> }
-                { filmstripOnly || <Chat /> }
+                { _showPrejoin || _isLobbyScreenVisible || <Toolbox /> }
+                <Chat />
 
                 { this.renderNotificationsContainer() }
 
                 <CalleeInfoContainer />
 
-                { !filmstripOnly && _showPrejoin && <Prejoin />}
+                { _showPrejoin && <Prejoin />}
             </div>
         );
     }
@@ -258,9 +250,6 @@ class Conference extends AbstractConference<Props, *> {
         dispatch(connect());
 
         maybeShowSuboptimalExperienceNotification(dispatch, t);
-
-        interfaceConfig.filmStripOnly
-            && dispatch(setToolboxAlwaysVisible(true));
     }
 }
 
@@ -276,6 +265,7 @@ function _mapStateToProps(state) {
     return {
         ...abstractMapStateToProps(state),
         _iAmRecorder: state['features/base/config'].iAmRecorder,
+        _isLobbyScreenVisible: state['features/base/dialog']?.component === LobbyScreen,
         _layoutClassName: LAYOUT_CLASSNAMES[getCurrentLayout(state)],
         _roomName: getConferenceNameForTitle(state),
         _showPrejoin: isPrejoinPageVisible(state)

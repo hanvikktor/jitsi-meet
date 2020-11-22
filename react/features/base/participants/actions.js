@@ -5,6 +5,7 @@ import {
     DOMINANT_SPEAKER_CHANGED,
     HIDDEN_PARTICIPANT_JOINED,
     HIDDEN_PARTICIPANT_LEFT,
+    GRANT_MODERATOR,
     KICK_PARTICIPANT,
     MUTE_REMOTE_PARTICIPANT,
     PARTICIPANT_ID_CHANGED,
@@ -18,7 +19,8 @@ import {
 import {
     getLocalParticipant,
     getNormalizedDisplayName,
-    getParticipantDisplayName
+    getParticipantDisplayName,
+    figureOutMutedWhileDisconnectedStatus
 } from './functions';
 
 /**
@@ -44,6 +46,22 @@ export function dominantSpeakerChanged(id, conference) {
             conference,
             id
         }
+    };
+}
+
+/**
+ * Create an action for granting moderator to a participant.
+ *
+ * @param {string} id - Participant's ID.
+ * @returns {{
+ *     type: GRANT_MODERATOR,
+ *     id: string
+ * }}
+ */
+export function grantModerator(id) {
+    return {
+        type: GRANT_MODERATOR,
+        id
     };
 }
 
@@ -199,12 +217,15 @@ export function muteRemoteParticipant(id) {
  * }}
  */
 export function participantConnectionStatusChanged(id, connectionStatus) {
-    return {
-        type: PARTICIPANT_UPDATED,
-        participant: {
-            connectionStatus,
-            id
-        }
+    return (dispatch, getState) => {
+        return {
+            type: PARTICIPANT_UPDATED,
+            participant: {
+                connectionStatus,
+                id,
+                mutedWhileDisconnected: figureOutMutedWhileDisconnectedStatus(getState(), id, connectionStatus)
+            }
+        };
     };
 }
 

@@ -4,7 +4,7 @@
 import React, { useRef } from 'react';
 
 import { translate } from '../../../base/i18n';
-import { copyText } from '../../../invite';
+import { copyText } from '../../../base/util';
 
 import PasswordForm from './PasswordForm';
 
@@ -154,9 +154,15 @@ function PasswordSection({
                     <a
                         className = 'remove-password'
                         onClick = { onPasswordRemove }>{ t('dialog.Remove') }</a>
-                    <a
-                        className = 'copy-password'
-                        onClick = { onPasswordCopy }>{ t('dialog.copy') }</a>
+                    {
+
+                        // There are cases like lobby and grant moderator when password is not available
+                        password ? <>
+                            <a
+                                className = 'copy-password'
+                                onClick = { onPasswordCopy }>{ t('dialog.copy') }</a>
+                        </> : null
+                    }
                 </>
             );
         }
@@ -170,7 +176,9 @@ function PasswordSection({
 
     return (
         <div className = 'security-dialog password-section'>
-            { t('security.about') }
+            <p className = 'description'>
+                { t(canEditPassword ? 'security.about' : 'security.aboutReadOnly') }
+            </p>
             <div className = 'security-dialog password'>
                 <div
                     className = 'info-dialog info-dialog-column info-dialog-password'

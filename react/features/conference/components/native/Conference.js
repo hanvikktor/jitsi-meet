@@ -4,7 +4,7 @@ import React from 'react';
 import { NativeModules, SafeAreaView, StatusBar } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-import { appNavigate } from '../../../app';
+import { appNavigate } from '../../../app/actions';
 import { PIP_ENABLED, getFeatureFlag } from '../../../base/flags';
 import { Container, LoadingIndicator, TintedView } from '../../../base/react';
 import { connect } from '../../../base/redux';
@@ -25,7 +25,9 @@ import { LargeVideo } from '../../../large-video';
 import { KnockingParticipantList } from '../../../lobby';
 import { BackButtonRegistry } from '../../../mobile/back-button';
 import { Captions } from '../../../subtitles';
-import { isToolboxVisible, setToolboxVisible, Toolbox } from '../../../toolbox';
+import { setToolboxVisible } from '../../../toolbox/actions';
+import { Toolbox } from '../../../toolbox/components/native';
+import { isToolboxVisible } from '../../../toolbox/functions';
 import {
     AbstractConference,
     abstractMapStateToProps
@@ -295,7 +297,9 @@ class Conference extends AbstractConference<Props, *> {
 
                     <Captions onPress = { this._onClick } />
 
-                    { _shouldDisplayTileView || <DisplayNameLabel participantId = { _largeVideoParticipantId } /> }
+                    { _shouldDisplayTileView || <Container style = { styles.displayNameContainer }>
+                        <DisplayNameLabel participantId = { _largeVideoParticipantId } />
+                    </Container> }
 
                     <LonelyMeetingExperience />
 
