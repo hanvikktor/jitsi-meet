@@ -12,3 +12,23 @@ sdk.dir=/home/victor/Android/
 >> cp -r /tmp/repo/ /mnt/e/tmp
 
 3) In Android Stuido Clean project and compile
+
+
+
+
+########################
+
+Change video resolution in this file and recompile:
+E:\Proyectos\PROGRAMACION\AndroidStudioProjects\jitsi-meet\node_modules\react-native-webrtc\RTCUtil.js 
+
+Default values are:
+const DEFAULT_VIDEO_CONSTRAINTS = {
+    facingMode: 'user',
+    frameRate: 30,
+    height: 720,
+    width: 1280
+};
+const ASPECT_RATIO = 16 / 9;
+
+
+#############
